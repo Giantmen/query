@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/Giantmen/query/config"
-	"github.com/Giantmen/query/log"
+	"github.com/golang/glog"
 	"github.com/solomoner/gozilla"
 
 	"github.com/Giantmen/trader/bourse"
@@ -14,6 +14,7 @@ import (
 	"github.com/Giantmen/trader/bourse/chbtc"
 	"github.com/Giantmen/trader/bourse/huobiN"
 	"github.com/Giantmen/trader/bourse/huobiO"
+	"github.com/Giantmen/trader/bourse/poloniex"
 	"github.com/Giantmen/trader/bourse/yunbi"
 	"github.com/Giantmen/trader/proto"
 )
@@ -72,6 +73,14 @@ func NewService(cfg *config.Config) (*Service, error) {
 		}
 	}
 
+	for _, c := range cfg.Poloniex {
+		if poloniex, err := poloniex.NewPoloniex(c.Accesskey, c.Secretkey, c.Timeout); err != nil {
+			return nil, err
+		} else {
+			bourses[strings.ToUpper(c.Name)] = poloniex
+		}
+	}
+
 	return &Service{
 		Bourses: bourses,
 	}, nil
@@ -80,7 +89,7 @@ func NewService(cfg *config.Config) (*Service, error) {
 func (s *Service) GetPriceOfDepth(ctx *gozilla.Context, r *proto.DepthQuery) (*proto.Price, error) {
 	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
 	if !ok {
-		log.Errorf("get %s err", r.Bourse)
+		glog.Errorf("get %s err", r.Bourse)
 		return nil, fmt.Errorf("get %s err", r.Bourse)
 	}
 	return bou.GetPriceOfDepth(r.Size, r.Depth, r.Currency)
@@ -89,12 +98,12 @@ func (s *Service) GetPriceOfDepth(ctx *gozilla.Context, r *proto.DepthQuery) (*p
 func (s *Service) GetAccount(ctx *gozilla.Context, r *proto.AccountQuery) (*proto.AccountReply, error) {
 	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
 	if !ok {
-		log.Errorf("get %s err", r.Bourse)
+		glog.Errorf("get %s err", r.Bourse)
 		return nil, fmt.Errorf("get %s err", r.Bourse)
 	}
 	account, err := bou.GetAccount()
 	if err != nil {
-		log.Error("GetAccount err", err)
+		glog.Error("GetAccount err", err)
 		return nil, err
 	}
 	//var Accounts = make(map[string]proto.SubAccount)
@@ -102,7 +111,7 @@ func (s *Service) GetAccount(ctx *gozilla.Context, r *proto.AccountQuery) (*prot
 	// 	if sub, ok := account.SubAccounts[currency]; ok {
 	// 		Accounts[currency] = sub
 	// 	} else {
-	// 		log.Error("can not find", currency)
+	// 		glog.Error("can not find", currency)
 	// 	}
 	// }
 	return &proto.AccountReply{
@@ -112,38 +121,10 @@ func (s *Service) GetAccount(ctx *gozilla.Context, r *proto.AccountQuery) (*prot
 	}, nil
 }
 
-func (s *Service) Sell(ctx *gozilla.Context, r *proto.OrderQuery) (*proto.Order, error) {
-	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
-	if !ok {
-		log.Errorf("get %s err", r.Bourse)
-		return nil, fmt.Errorf("get %s err", r.Bourse)
-	}
-	order, err := bou.Sell(r.Amount, r.Price, r.Currency)
-	if err != nil {
-		log.Error("sell err", err)
-		return nil, err
-	}
-	return bou.GetOneOrder(order.OrderID, order.Currency)
-}
-
-func (s *Service) Buy(ctx *gozilla.Context, r *proto.OrderQuery) (*proto.Order, error) {
-	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
-	if !ok {
-		log.Errorf("get %s err", r.Bourse)
-		return nil, fmt.Errorf("get %s err", r.Bourse)
-	}
-	order, err := bou.Buy(r.Amount, r.Price, r.Currency)
-	if err != nil {
-		log.Error("sell err", err)
-		return nil, err
-	}
-	return bou.GetOneOrder(order.OrderID, order.Currency)
-}
-
 func (s *Service) CancelOrder(ctx *gozilla.Context, r *proto.OneOrderQuery) (bool, error) {
 	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
 	if !ok {
-		log.Errorf("get %s err", r.Bourse)
+		glog.Errorf("get %s err", r.Bourse)
 		return false, fmt.Errorf("get %s err", r.Bourse)
 	}
 	return bou.CancelOrder(r.OrderID, r.Currency)
@@ -152,7 +133,7 @@ func (s *Service) CancelOrder(ctx *gozilla.Context, r *proto.OneOrderQuery) (boo
 func (s *Service) GetOneOrder(ctx *gozilla.Context, r *proto.OneOrderQuery) (*proto.Order, error) {
 	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
 	if !ok {
-		log.Errorf("get %s err", r.Bourse)
+		glog.Errorf("get %s err", r.Bourse)
 		return nil, fmt.Errorf("get %s err", r.Bourse)
 	}
 	return bou.GetOneOrder(r.OrderID, r.Currency)

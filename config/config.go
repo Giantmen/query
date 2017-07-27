@@ -21,4 +21,5 @@ type Config struct {
 	HuobiO   []Server
 	Btctrade []Server
 	Bter     []Server
+	Poloniex []Server
 }
