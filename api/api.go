@@ -95,30 +95,13 @@ func (s *Service) GetPriceOfDepth(ctx *gozilla.Context, r *proto.DepthQuery) (*p
 	return bou.GetPriceOfDepth(r.Size, r.Depth, r.Currency)
 }
 
-func (s *Service) GetAccount(ctx *gozilla.Context, r *proto.AccountQuery) (*proto.AccountReply, error) {
+func (s *Service) GetAccount(ctx *gozilla.Context, r *proto.AccountQuery) (*proto.Account, error) {
 	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
 	if !ok {
 		glog.Errorf("get %s err", r.Bourse)
 		return nil, fmt.Errorf("get %s err", r.Bourse)
 	}
-	account, err := bou.GetAccount()
-	if err != nil {
-		glog.Error("GetAccount err", err)
-		return nil, err
-	}
-	//var Accounts = make(map[string]proto.SubAccount)
-	// for _, currency := range r.Accounts {
-	// 	if sub, ok := account.SubAccounts[currency]; ok {
-	// 		Accounts[currency] = sub
-	// 	} else {
-	// 		glog.Error("can not find", currency)
-	// 	}
-	// }
-	return &proto.AccountReply{
-		Bourse:   account.Bourse,
-		Asset:    account.Asset,
-		Accounts: account.SubAccounts,
-	}, nil
+	return bou.GetAccount()
 }
 
 func (s *Service) CancelOrder(ctx *gozilla.Context, r *proto.OneOrderQuery) (bool, error) {

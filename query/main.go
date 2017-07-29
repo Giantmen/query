@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"time"
 
 	"github.com/Giantmen/query/api"
 	"github.com/Giantmen/query/config"
@@ -18,7 +17,7 @@ var (
 
 func main() {
 	flag.Parse()
-	glog.Infof("query start at %s", time.Now())
+	glog.Infof("query start")
 
 	var cfg config.Config
 	_, err := toml.DecodeFile(*cfgPath, &cfg)
@@ -31,7 +30,7 @@ func main() {
 		glog.Error("NewService err", err)
 	}
 	gozilla.RegisterService(bourse, "trader")
-	glog.Info("register", "bourse")
+	glog.Infoln("register", "bourse")
 
 	gozilla.DefaultLogOpt.Format += " {{.Body}}"
 	glog.Fatal(gozilla.ListenAndServe(cfg.Listen))
