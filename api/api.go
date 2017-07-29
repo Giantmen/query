@@ -104,6 +104,34 @@ func (s *Service) GetAccount(ctx *gozilla.Context, r *proto.AccountQuery) (*prot
 	return bou.GetAccount()
 }
 
+func (s *Service) Sell(ctx *gozilla.Context, r *proto.OrderQuery) (*proto.Order, error) {
+	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
+	if !ok {
+		glog.Errorf("get %s err", r.Bourse)
+		return nil, fmt.Errorf("get %s err", r.Bourse)
+	}
+	order, err := bou.Sell(r.Amount, r.Price, r.Currency)
+	if err != nil {
+		glog.Error("sell err", err)
+		return nil, err
+	}
+	return bou.GetOneOrder(order.OrderID, order.Currency)
+}
+
+func (s *Service) Buy(ctx *gozilla.Context, r *proto.OrderQuery) (*proto.Order, error) {
+	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
+	if !ok {
+		glog.Errorf("get %s err", r.Bourse)
+		return nil, fmt.Errorf("get %s err", r.Bourse)
+	}
+	order, err := bou.Buy(r.Amount, r.Price, r.Currency)
+	if err != nil {
+		glog.Error("sell err", err)
+		return nil, err
+	}
+	return bou.GetOneOrder(order.OrderID, order.Currency)
+}
+
 func (s *Service) CancelOrder(ctx *gozilla.Context, r *proto.OneOrderQuery) (bool, error) {
 	bou, ok := s.Bourses[strings.ToUpper(r.Bourse)]
 	if !ok {
